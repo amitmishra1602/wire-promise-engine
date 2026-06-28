@@ -319,29 +319,36 @@ def render_shap(report):
     rows_html = ""
     for feat, val, desc in report.shap_top3:
         bar_width = int(abs(val) / max_impact * 180)
-        bar_class = "shap-bar-pos" if val > 0 else "shap-bar-neg"
+        bar_color = "#ef4444" if val > 0 else "#22c55e"
         sign      = "+" if val > 0 else ""
-        color     = "#ef4444" if val > 0 else "#22c55e"
         label     = feat.replace("_", " ").title()
-        rows_html += f"""
-        <div class="shap-row">
-          <div class="shap-label">{label}</div>
-          <div class="{bar_class}" style="width:{bar_width}px"></div>
-          <div class="shap-val" style="color:{color}">{sign}{val:.2f} days</div>
-        </div>
-        <div style="margin-left:210px;margin-top:-4px;margin-bottom:8px" class="shap-desc">{desc}</div>
-        """
+        rows_html += (
+            '<div style="display:flex;align-items:center;gap:10px;margin:8px 0;">'
+            '<div style="width:200px;font-size:0.82rem;color:#94a3b8;flex-shrink:0;">' + label + '</div>'
+            '<div style="height:14px;background:' + bar_color + ';border-radius:4px;width:' + str(bar_width) + 'px;min-width:4px;"></div>'
+            '<div style="font-size:0.85rem;font-weight:700;color:' + bar_color + ';">' + sign + f'{val:.2f}' + ' days</div>'
+            '</div>'
+            '<div style="margin-left:210px;margin-top:-4px;margin-bottom:10px;font-size:0.75rem;color:#64748b;">' + desc + '</div>'
+        )
 
-    st.markdown(f"""
-    <div style="background:#1e2533;border-radius:12px;padding:20px 24px;border-left:5px solid #a855f7">
-      <div class="layer-title">EXPLAINABILITY</div>
-      <div class="layer-heading">🔍 Top 3 Feature Drivers (SHAP-proxy)</div>
-      <div style="margin-bottom:6px;font-size:0.78rem;color:#64748b">
-        Red = adding days (delay) &nbsp;|&nbsp; Green = reducing days (accelerating)
-      </div>
-      {rows_html}
-    </div>
-    """, unsafe_allow_html=True)
+    html_block = (
+        '<div style="background:#1e2533;border-radius:12px;padding:20px 24px;'
+        'border-left:5px solid #a855f7;margin-bottom:16px;">'
+        '<div style="font-size:0.75rem;font-weight:700;letter-spacing:1.5px;'
+        'text-transform:uppercase;color:#94a3b8;margin-bottom:6px;">EXPLAINABILITY</div>'
+        '<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:12px;">'
+        '&#128269; Top 3 Feature Drivers (SHAP-proxy)</div>'
+        '<div style="margin-bottom:10px;font-size:0.78rem;color:#64748b;">'
+        'Red = adding days (delay) &nbsp;|&nbsp; Green = reducing days (accelerating)</div>'
+        + rows_html +
+        '</div>'
+    )
+
+    # st.html() is preferred in Streamlit 1.36+ for raw HTML rendering
+    try:
+        st.html(html_block)
+    except AttributeError:
+        st.markdown(html_block, unsafe_allow_html=True)
 
 
 def render_warnings(report):
